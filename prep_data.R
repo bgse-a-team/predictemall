@@ -29,6 +29,7 @@ coords2continent = function(points){
 }
 
 data <- raw_data
+rm(raw_data)
 
 # Create country variable
 data$country <- coords2country(rev(data[,2:3]))
@@ -52,10 +53,17 @@ names(Pokemon)[4]<-'type2'
 names(Pokemon)[9]<-'sp_atk'
 names(Pokemon)[10]<-'sp_def'
 data <- merge(data,Pokemon[,1:3],by.x='class',by.y='id',sort=F)
+data[,"class"] <- as.factor(data[,"class"])
+data[,"type1"] <- as.factor(data[,"type1"])
+data$terrainType <- as.factor(data$terrainType)
+data$pokestopDistanceKm <- as.numeric(data$pokestopDistanceKm)
 
 # Write db to mySQL
 dbWriteTable(con,"poke_spawns",data)
 
-par(mar=rep(4,4)) 
-map(database="world",c("Canada","usa","Mexico"))
-points(data$longitude,data$latitude,pch=18,cex=0.5,col="red")
+#par(mar=rep(4,4)) 
+#map(database="world",c("Canada","usa","Mexico"))
+#points(data$longitude,data$latitude,pch=18,cex=0.5,col="red")
+
+# Save R environment
+save.image("./R_Environment.RData")
