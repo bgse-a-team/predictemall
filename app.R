@@ -122,13 +122,13 @@ server <- shinyServer(function(input, output) {
     })
   
   output$map_continent <- renderLeaflet({
-    leaflet(as.data.frame(selectedData2()[,3:4])) %>%
+    leaflet(as.data.frame(selectedData2()[,5:4])) %>%
       addTiles() %>%
       addCircles() 
     })
   
   output$map_country <- renderLeaflet({
-    leaflet(as.data.frame(selectedData()[,3:4])) %>%
+    leaflet(as.data.frame(selectedData()[,5:4])) %>%
       addTiles() %>%
       addCircles() 
   })
