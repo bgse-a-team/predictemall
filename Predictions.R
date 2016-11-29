@@ -30,7 +30,7 @@ vars <- as.character(vars[,2])
     
     ## Fit a KNN model for K ranging from 3 to 15
     for (j in 3:15){
-      model_knn <- knn(train = trainData[,c(2,3)], test = testData[,c(2,3)], cl = trainData[,"type1"], k = j)
+      model_knn <- knn(train = trainData[,c(3,4)], test = testData[,c(3,4)], cl = trainData[,"type1"], k = j)
       
       ## Compute the error rate for each of the K
       x <- cbind(as.character(model_knn),as.character(testData[,"type1"]))
@@ -51,7 +51,7 @@ vars <- as.character(vars[,2])
   
   ## Fit again the model for K = 3 to abtain the exact prediction
   data$type1 <- as.factor(data$type1)
-  model_knn3 <- knn(train = data[,c(2,3)], test = data[,c(2,3)], cl = data[,"type1"], k = 3)
+  model_knn3 <- knn(train = data[,c(3,4)], test = data[,c(3,4)], cl = data[,"type1"], k = 3)
   
 
 
@@ -130,4 +130,3 @@ vars <- as.character(vars[,2])
   rownames(error_per_type) <- levels(used_data$type1)
   colnames(error_per_type) <- "error"
   error_per_type
-  
