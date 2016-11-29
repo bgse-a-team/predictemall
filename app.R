@@ -16,8 +16,8 @@ css <- "
   content: 'Please Select an Option'; }
 }
 "
-con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
-#con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
+#con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
+con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
 #con <- dbConnect(MySQL(),user = "root", password = "password", host = "127.0.0.1", dbname = "project")
 
 # Define UI for application that draws a histogram

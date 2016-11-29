@@ -4,7 +4,8 @@ library(rworldxtra)
 library(RMySQL)
 
 # initialise mysql connection
-con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
+#con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
+con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
 print("successful connection")
 
 # read raw data
@@ -32,7 +33,7 @@ data <- raw_data
 rm(raw_data)
 
 # Create country variable
-data$country <- coords2country(rev(data[,2:3]))
+data$country <- coords2country(rev(data[,3:4]))
 data$country <- as.character(data$country)
 
 # Change country name so the map package can read the country properly
@@ -40,7 +41,7 @@ data$country[data[,"country"] == "United States of America"] <- "usa"
 data$country[data[,"country"] == "United Kingdom"] <- "UK"
 
 # Create continent variable
-data$continent <- coords2continent(rev(data[,2:3]))
+data$continent <- coords2continent(rev(data[,3:4]))
 data$continent <- as.character(data$continent)
 
 # Remove city variable - it is incorrect
