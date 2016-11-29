@@ -48,7 +48,7 @@ ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor"
                          tabPanel("Analysis",
                                   sidebarLayout(
                                     sidebarPanel(
-                                      selectInput("select_type","Select Type of Pokemon",dbGetQuery(con,"SELECT DISTINCT `Type 1` FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `Type 1` IS NOT NULL ORDER BY `Type 1`")),
+                                      selectInput("select_type","Select Type of Pokemon",dbGetQuery(con,"SELECT DISTINCT `type1` FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `type1` IS NOT NULL ORDER BY `type1`")),
                                       selectInput("select_weather","Select Weather",dbGetQuery(con,"SELECT DISTINCT weather FROM poke_spawns WHERE weather IS NOT NULL ORDER BY weather")
                                                   )),
                                       mainPanel("The most important variables to find this pokemon type is")
@@ -135,7 +135,7 @@ server <- shinyServer(function(input, output) {
   })
   
   selectedtype <- reactive({
-    dbGetQuery(con,sprintf("SELECT * FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `Type 1` = \'%s\'",as.character(input$select_type)))
+    dbGetQuery(con,sprintf("SELECT * FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `type1` = \'%s\'",as.character(input$select_type)))
   })
   
   output$hist_poke <-renderPlot(barplot(table(as.vector(selectedinfo()$weather))))
