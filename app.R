@@ -17,6 +17,8 @@ css <- "
 }
 "
 con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
+#con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
+#con <- dbConnect(MySQL(),user = "root", password = "password", host = "127.0.0.1", dbname = "project")
 
 # Define UI for application that draws a histogram
 ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor", theme = shinytheme("slate"),
@@ -37,7 +39,7 @@ ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor"
                          tabPanel("More Descriptive",
                                   sidebarLayout(
                                     sidebarPanel(
-                                      selectInput("select_class","Select Pokemon",dbGetQuery(con,"SELECT DISTINCT Name FROM (poke_spawns a inner join pkmn_info b on id = pokemonId)  WHERE Name IS NOT NULL ORDER BY Name")),
+                                      selectInput("select_class","Select Pokemon",dbGetQuery(con,"SELECT DISTINCT a.Name FROM (poke_spawns a inner join pkmn_info b on b.id = a.pokemonId)  WHERE a.Name IS NOT NULL ORDER BY a.Name")),
                                       selectInput("select_weather","Select Weather",dbGetQuery(con,"SELECT DISTINCT weather FROM poke_spawns WHERE weather IS NOT NULL ORDER BY weather"))
                                     ),
                                     mainPanel(
