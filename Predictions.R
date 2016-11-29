@@ -1,14 +1,18 @@
 # Adding pokemon type and name
-load("~/Desktop/predictemall/R_Environment.RData")
-Pokemon <- read.csv("~/Desktop/predictemall/Pokemon.csv")
-load("~/Desktop/R_Environment_Predictions.RData")
-colnames(Pokemon)[1] <- "class"
-Pokemon[,3] <- as.character(Pokemon[,3])
-data <- merge(data,Pokemon[,1:3],by="class",all=F)
-data[,"class"] <- as.factor(data[,"class"])
-data[,"Type.1"] <- as.factor(data[,"Type.1"])
-data$terrainType <- as.factor(data$terrainType)
-data$pokestopDistanceKm <- as.numeric(data$pokestopDistanceKm)
+#load("~/Desktop/predictemall/R_Environment.RData")
+#Pokemon <- read.csv("~/Desktop/predictemall/Pokemon.csv")
+#load("~/Desktop/R_Environment_Predictions.RData")
+#colnames(Pokemon)[1] <- "class"
+#Pokemon[,3] <- as.character(Pokemon[,3])
+#data <- merge(data,Pokemon[,1:3],by="class",all=F)
+#data[,"class"] <- as.factor(data[,"class"])
+#data[,"Type.1"] <- as.factor(data[,"Type.1"])
+#data$terrainType <- as.factor(data$terrainType)
+#data$pokestopDistanceKm <- as.numeric(data$pokestopDistanceKm)
+# Load R Environment and variable list for Random Forests (basically removing variables like id, coordinates, country, etc)
+load("./R_Environment.RData")
+vars <- read.csv("./vars.csv")
+vars <- as.character(vars[,2])
 
 # Fitting the KNN model
   library(class)
@@ -55,15 +59,15 @@ data$pokestopDistanceKm <- as.numeric(data$pokestopDistanceKm)
 # Fitting Random forest
   library(randomForest)
   ## Selecting variables for fitting the model
-  used_data <- data[,-which(colnames(data) %in% c("class","region","country","pokemonId","latitude",
-                                                  "longitude","X_id","cellId_90m","cellId_180m",
-                                                  "cellId_370m","cellId_730m","cellId_1460m",
-                                                  "cellId_2920m",  "cellId_5850m","appearedLocalTime",
-                                                  "Name"))]
+ # used_data <- data[,-which(colnames(data) %in% c("class","region","country","pokemonId","latitude",
+ #                                                 "longitude","X_id","cellId_90m","cellId_180m",
+ #                                                 "cellId_370m","cellId_730m","cellId_1460m",
+ #                                                 "cellId_2920m",  "cellId_5850m","appearedLocalTime",
+ #                                                 "Name"))]
   used_data <- data[,vars]
-  used_data <- used_data[,-which(colnames(used_data) %in% c("cellId_90m","cellId_180m",
-                                                            "cellId_370m","cellId_730m","cellId_1460m",
-                                                            "cellId_2920m",  "cellId_5850m"))]
+ # used_data <- used_data[,-which(colnames(used_data) %in% c("cellId_90m","cellId_180m",
+ #                                                           "cellId_370m","cellId_730m","cellId_1460m",
+ #                                                           "cellId_2920m",  "cellId_5850m"))]
   used_data$terrainType <- as.factor(used_data$terrainType)
   used_data$pokestopDistanceKm <- as.numeric(used_data$pokestopDistanceKm)
 
