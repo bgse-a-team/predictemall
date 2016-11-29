@@ -1,4 +1,10 @@
 1. Start EC2 instance
+1.5. Set 2GB swap and turn it on
+
+$sudo dd if=/dev/zero of=/var/swap.img bs=1024k count=4000
+$sudo mkswap /var/swap.img
+$sudo swapon /var/swap.img
+
 2. clone git repository
 3. sudo apt install r-base
 4. install shiny package for R $ sudo su - \-c "R -e \"install.packages('shiny', repos='https://cran.rstudio.com/')\""
@@ -19,3 +25,21 @@ $ sudo systemctl stop shiny-server
 10. migrate db to instance - done using dump file in this case
 11. move app directory to /srv/shiny-server/
 12. app is live at <ip-address>:3838
+
+Next time, use a docker
+
+
+WORKFLOW
+
+1. wget sql dump file
+2. create database project; in mysql
+3. load dump file into project db
+
+mysqldump -u user1 -ppassword1 databasename > dump.sql
+mysql -u user2 -ppassword2 databasename < dump.sql
+
+4. run prep_data.R file to prepare db and save R environment
+
+$ Rscript prep_data.R
+
+5. begin anything in Predictions.R file from loading the environment

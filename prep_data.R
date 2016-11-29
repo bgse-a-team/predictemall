@@ -53,6 +53,7 @@ names(Pokemon)[4]<-'type2'
 names(Pokemon)[9]<-'sp_atk'
 names(Pokemon)[10]<-'sp_def'
 data <- merge(data,Pokemon[,1:3],by.x='class',by.y='id',sort=F)
+data$row_names <- NULL
 data[,"class"] <- as.factor(data[,"class"])
 data[,"type1"] <- as.factor(data[,"type1"])
 data$terrainType <- as.factor(data$terrainType)
