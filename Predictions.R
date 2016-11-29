@@ -29,7 +29,7 @@ vars <- as.character(vars[,2])
     testData <- data[which(folds == i),]
     
     ## Fit a KNN model for K ranging from 3 to 15
-    for (j in 3:15){
+    for (j in 3:30){
       model_knn <- knn(train = trainData[,c(3,4)], test = testData[,c(3,4)], cl = trainData[,"type1"], k = j)
       
       ## Compute the error rate for each of the K
@@ -44,14 +44,14 @@ vars <- as.character(vars[,2])
   }
   
   ## Error matrix in percentage
-  round(error*100,1)
+  round(error,1)
   
   ## Compute the mean error rate for each K
-  round(apply(error,1,mean),3)*100 # Best perfomance when K = 3
+  round(apply(error,1,mean),3) # Best perfomance when K = 27
   
   ## Fit again the model for K = 3 to abtain the exact prediction
   data$type1 <- as.factor(data$type1)
-  model_knn3 <- knn(train = data[,c(3,4)], test = data[,c(3,4)], cl = data[,"type1"], k = 3)
+  model_knn3 <- knn(train = data[,c(3,4)], test = data[,c(3,4)], cl = data[,"type1"], k = 27)
   
 
 

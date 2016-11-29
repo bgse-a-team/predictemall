@@ -28,6 +28,11 @@ $ sudo systemctl stop shiny-server
 
 Next time, use a docker
 
+Issues:
+1. Need to avoid re-running render map when selecting just continent/country - run only after pressing button
+2. Points in sea maybe because of column names when selecting latitude and longitude
+3. Using observeEvent() and EventReactive()
+
 
 WORKFLOW
 
