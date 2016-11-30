@@ -28,9 +28,11 @@ ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor"
                                       selectInput("select_continent","Select Continent",selected=NA,dbGetQuery(con,"SELECT DISTINCT continent FROM poke_spawns WHERE country IS NOT NULL ORDER BY continent")),
                                       uiOutput("selectedContinent"),
                                       uiOutput("Types"),
+                                      selectInput("select_class","Select Pokemon",dbGetQuery(con,"SELECT DISTINCT a.Name FROM (poke_spawns a inner join pkmn_info b on b.id = a.pokemonId)  WHERE a.Name IS NOT NULL ORDER BY a.Name")),
+                                      uiOutput("pics",align="center"),
                                       sliderInput("time", "Period of Time", min = as.Date("2016-08-04"), max = as.Date("2016-10-12"), 
                                                   value = c(as.Date("2016-08-01"), Sys.Date())),
-                                      actionButton("action", label = "(Pokemon) GO ")
+                                      actionButton("action", label = "(Pokemon) GO")
                                     ),
                                     mainPanel(
                                       "Spawns in selected continent",
@@ -40,18 +42,6 @@ ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor"
                                     )
                                   )        
                          ),
-                         tabPanel("More Descriptive",
-                                  sidebarLayout(
-                                    sidebarPanel(
-                                      selectInput("select_class","Select Pokemon",dbGetQuery(con,"SELECT DISTINCT a.Name FROM (poke_spawns a inner join pkmn_info b on b.id = a.pokemonId)  WHERE a.Name IS NOT NULL ORDER BY a.Name")),
-                                      uiOutput("pics",align="center"),
-                                      selectInput("select_weather","Select Weather",dbGetQuery(con,"SELECT DISTINCT weather FROM poke_spawns WHERE weather IS NOT NULL ORDER BY weather"))
-                                    ),
-                                    mainPanel(
-                                      plotOutput("hist_poke"),
-                                      plotOutput("hist_other")
-                                    )
-                                  )),
                          tabPanel("Analysis",
                                   sidebarLayout(
                                     sidebarPanel(
