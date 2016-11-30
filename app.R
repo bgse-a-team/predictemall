@@ -24,7 +24,7 @@ con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.
 ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor", theme = shinytheme("slate"),
                          tabPanel("Descriptive",
                                   sidebarLayout(
-                                    sidebarPanel("Select country and time period to see pokemon spawns",
+                                    sidebarPanel("Select continent and time period to see pokemon spawns",
                                       selectInput("select_continent","Select Continent",selected=NULL,multiple=TRUE,dbGetQuery(con,"SELECT DISTINCT continent FROM poke_spawns WHERE country IS NOT NULL ORDER BY continent")),
                                       uiOutput("selectedContinent"),
                                       uiOutput("Types"),
