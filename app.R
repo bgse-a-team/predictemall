@@ -33,7 +33,9 @@ ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor"
                                       actionButton("action", label = "(Pokemon) GO ")
                                     ),
                                     mainPanel(
+                                      "Spawns in selected continent",
                                       leafletOutput("map_continent"),
+                                      "Spawns in selected country",
                                       leafletOutput("map_country")
                                     )
                                   )        
