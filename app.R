@@ -16,15 +16,15 @@ css <- "
   content: 'Please Select an Option'; }
 }
 "
-#con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
-con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
+con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
+#con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
 #con <- dbConnect(MySQL(),user = "root", password = "password", host = "127.0.0.1", dbname = "project")
 
 # Define UI for application that draws a histogram
 ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor", theme = shinytheme("slate"),
                          tabPanel("Descriptive",
                                   sidebarLayout(
-                                    sidebarPanel("Select area and time period to see pokemon spawns",
+                                    sidebarPanel("Select country and time period to see pokemon spawns",
                                       selectInput("select_continent","Select Continent",selected=NULL,multiple=TRUE,dbGetQuery(con,"SELECT DISTINCT continent FROM poke_spawns WHERE country IS NOT NULL ORDER BY continent")),
                                       uiOutput("selectedContinent"),
                                       uiOutput("Types"),
