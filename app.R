@@ -24,11 +24,13 @@ con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1"
 ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor", theme = shinytheme("slate"),
                          tabPanel("Descriptive",
                                   sidebarLayout(
-                                    sidebarPanel(
+                                    sidebarPanel("Select area and time period to see pokemon spawns",
                                       selectInput("select_continent","Select Continent",selected=NULL,multiple=TRUE,dbGetQuery(con,"SELECT DISTINCT continent FROM poke_spawns WHERE country IS NOT NULL ORDER BY continent")),
                                       uiOutput("selectedContinent"),
+                                      uiOutput("Types"),
                                       sliderInput("time", "Period of Time", min = as.Date("2016-08-04"), max = as.Date("2016-10-12"), 
-                                                  value = c(as.Date("2016-08-01"), Sys.Date()))
+                                                  value = c(as.Date("2016-08-01"), Sys.Date())),
+                                      actionButton("action", label = "(Pokemon) GO ")
                                     ),
                                     mainPanel(
                                       leafletOutput("map_continent"),
@@ -40,6 +42,7 @@ ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor"
                                   sidebarLayout(
                                     sidebarPanel(
                                       selectInput("select_class","Select Pokemon",dbGetQuery(con,"SELECT DISTINCT a.Name FROM (poke_spawns a inner join pkmn_info b on b.id = a.pokemonId)  WHERE a.Name IS NOT NULL ORDER BY a.Name")),
+                                      uiOutput("pics",align="center"),
                                       selectInput("select_weather","Select Weather",dbGetQuery(con,"SELECT DISTINCT weather FROM poke_spawns WHERE weather IS NOT NULL ORDER BY weather"))
                                     ),
                                     mainPanel(
@@ -115,23 +118,45 @@ server <- shinyServer(function(input, output) {
   selectedData2 <- reactive({
     dbGetQuery(con,sprintf("SELECT * FROM poke_spawns WHERE continent = \'%s\'",as.character(input$select_continent)))
   })
+
+  selectedData3 <- reactive({
+    dbGetQuery(con,sprintf("SELECT * FROM poke_spawns inner join pkmn_info on id = pokemonId WHERE continent = \'%s\' and country = \'%s\' and `type1` = \'%s\'",as.character(input$select_continent),as.character(input$select_country),as.character(input$select_typeofpoke)))
+  })
   
   output$selectedContinent <- renderUI({
     countries<-dbGetQuery(con, sprintf("SELECT DISTINCT country FROM poke_spawns WHERE continent = \'%s\' ORDER BY country", as.character(input$select_continent))) 
     conditionalPanel("input.select_continent", selectInput("select_country","Select Country", countries))
     })
+
+  output$Types <- renderUI({
+    types<-dbGetQuery(con,"SELECT DISTINCT `type1` FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `type1` IS NOT NULL ORDER BY `type1`") 
+    conditionalPanel("input.select_country", selectInput("select_typeofpoke","Select Type of Pokemon", types))
+  })
   
   output$map_continent <- renderLeaflet({
+    input$action
+    isolate(
     leaflet(as.data.frame(selectedData2()[,5:4])) %>%
       addTiles() %>%
-      addCircles() 
+      addCircles()
+    ) 
     })
   
   output$map_country <- renderLeaflet({
+    input$action
+    isolate(
     leaflet(as.data.frame(selectedData()[,5:4])) %>%
       addTiles() %>%
       addCircles() 
+  )
   })
+
+  output$pics<-renderUI({
+    
+    tags$img(src = pokemonGO[pokemonGO$Name==input$select_class,7], alt = "photo",height="200", width="200")
+    
+  })
+
   selectedinfo <- reactive({
     dbGetQuery(con,sprintf("SELECT * FROM poke_spawns WHERE class = \'%s\'",as.character(input$select_class)))
   })
@@ -145,7 +170,8 @@ server <- shinyServer(function(input, output) {
   
   output$plot1 <- renderPlot({
     if (input$plot_type == "base") {
-      map(database="world",input$select_country)
+      #map(database="world",input$select_country)
+      map(database="world",input$select_continent)
       points(selectedData()$longitude[(selectedData()$appearedLocalTime > input$time[1])], selectedData()$latitude[(selectedData()$appearedLocalTime > input$time[1])],pch=18,cex=0.5,col="red")
       
     } else if (input$plot_type == "ggplot2") {
