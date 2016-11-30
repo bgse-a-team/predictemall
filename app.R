@@ -25,7 +25,7 @@ ui <- shinyUI(navbarPage(tags$style(type="text/css", css),"Pokemon Go Predictor"
                          tabPanel("Descriptive",
                                   sidebarLayout(
                                     sidebarPanel("Select continent and time period to see pokemon spawns",
-                                      selectInput("select_continent","Select Continent",selected=NULL,multiple=TRUE,dbGetQuery(con,"SELECT DISTINCT continent FROM poke_spawns WHERE country IS NOT NULL ORDER BY continent")),
+                                      selectInput("select_continent","Select Continent",selected=NA,dbGetQuery(con,"SELECT DISTINCT continent FROM poke_spawns WHERE country IS NOT NULL ORDER BY continent")),
                                       uiOutput("selectedContinent"),
                                       uiOutput("Types"),
                                       sliderInput("time", "Period of Time", min = as.Date("2016-08-04"), max = as.Date("2016-10-12"), 
@@ -135,14 +135,16 @@ server <- shinyServer(function(input, output) {
     conditionalPanel("input.select_country", selectInput("select_typeofpoke","Select Type of Pokemon", types))
   })
   
+  try_continent <- eventReactive(input$action, {
+    as.data.frame(selectedData2()[,5:4])
+  })
+  
+  
   output$map_continent <- renderLeaflet({
-    input$action
-    isolate(
-    leaflet(as.data.frame(selectedData2()[,5:4])) %>%
+    leaflet(try_continent()) %>%
       addTiles() %>%
       addCircles()
-    ) 
-    })
+  })
   
   output$map_country <- renderLeaflet({
     input$action
