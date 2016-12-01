@@ -1,5 +1,5 @@
 1. Start EC2 instance
-1.5. Set 2GB swap and turn it on
+1.5. Set 4GB swap and turn it on
 
 $sudo dd if=/dev/zero of=/var/swap.img bs=1024k count=4000
 $sudo mkswap /var/swap.img
