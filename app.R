@@ -7,7 +7,7 @@ library(shinythemes)
 library(ggplot2)
 library(leaflet)
 library(class)
-library(randomForest)
+#library(randomForest)
 library(plotly)
 #library(googleVis)
 #library(plotrix)
@@ -85,7 +85,13 @@ ui <- shinyUI(navbarPage(
              mainPanel("The most probable type of pokemon that will appear at this location would be:",
                        textOutput("knn_result"),
                        #imageOutput(type_image),
-                       "Some information about the prediction methodology")
+                       "To make this prediction we have used the KNN algorithm with k=27. The algorthim 
+                        has been trained on our data set of more than 300,000 observations. Given a longitude
+                       and latitude it finds the closest observations to this point. Using these nearest neighbours 
+                       we find the most common type of pokemon in that area and make our prediction using this information.
+                      We chose k=27, after testing error rates usinf 5-fold cross validation. Our data was split into 5 random samples,
+                       4 were used as training and 1 for testing. We ran this cross validation for values of k=3 
+                       up to k=30 and concluded that our lowest error rate was at k=27.")
              #textOutput(knn_info))
            )),
   tabPanel("Where are you Pikachu?",
