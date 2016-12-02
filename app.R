@@ -262,13 +262,7 @@ server <- shinyServer(function(input, output) {
     imp2 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.2)
     imp3 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.3)
     imp4 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.4)
-    #output$plot_imp3 <- renderPlot(hist(rnorm(100)))
-    #output$plot_imp4 <- renderPlot(hist(rnorm(100)))
-    #output$plot_imp1 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp1],main = paste("Variable 1:",imp1)))
-    #output$plot_imp2 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp2],main = paste("Variable 2:",imp2)))
-    #output$plot_imp3 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp3],main = paste("Variable 3:",imp3)))
-    #output$plot_imp4 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp4],main = paste("Variable 4:",imp4)))
-    
+        
     x1 <- subset(data, type1==selectedtype)[,imp1]
     d1 <- density(x1,na.rm = T)
     #plot(d1, main = paste("Variable 1:",imp1))
