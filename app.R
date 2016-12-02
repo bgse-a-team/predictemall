@@ -23,8 +23,8 @@ options(shiny.error = function(){})
 #   content: 'Please Select an Option'; }
 # }
 # "
-#con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
-con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
+con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
+#con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
 #con <- dbConnect(MySQL(),user = "root", password = "password", host = "127.0.0.1", dbname = "project")
 
 # Define UI for application
@@ -37,6 +37,7 @@ ui <- shinyUI(navbarPage(
              sidebarPanel("Select desired fields to see pokemon spawns",
                           selectInput("select_continent","Select Continent",dbGetQuery(con,"SELECT DISTINCT continent FROM poke_spawns WHERE country IS NOT NULL ORDER BY continent")),
                           uiOutput("selectedContinent"),
+                          uiOutput("region"),
                           uiOutput("type_or_pkmn"),
                           uiOutput("by_type"),
                           uiOutput("by_pokemon"),
@@ -56,7 +57,8 @@ ui <- shinyUI(navbarPage(
                ),
                fluidRow(
                  titlePanel("Spawns in selected country"),
-                 leafletOutput("map_country")
+                 leafletOutput("map_country"),
+                 uiOutput("region_map")
                )
              )
            )
@@ -78,24 +80,21 @@ ui <- shinyUI(navbarPage(
                            step = 0.01),
                actionButton("action2", label = "(Pokemon) GO")
              ),
-             mainPanel("The most probable type of pokemon that will appear at this location would be:",
-                       textOutput("knn_result"),
-                       #imageOutput(type_image),
-                       "To make this prediction we have used the KNN algorithm with k=27. The algorthim 
-                        has been trained on our data set of more than 300,000 observations. Given a longitude
-                       and latitude it finds the closest observations to this point. Using these nearest neighbours 
-                       we find the most common type of pokemon in that area and make our prediction using this information.
-                      We chose k=27, after testing error rates usinf 5-fold cross validation. Our data was split into 5 random samples,
-                       4 were used as training and 1 for testing. We ran this cross validation for values of k=3 
-                       up to k=30 and concluded that our lowest error rate was at k=27.")
-             #textOutput(knn_info))
+             mainPanel(
+               titlePanel("The most probable type of pokemon that will appear at this location would be:"),
+               textOutput("knn_result"),
+               uiOutput("result_pic"),
+               hr(),
+               fluidRow(titlePanel("Methodology"),
+                        textOutput("knn_info"))
+             )
            )),
   tabPanel("Where are you Pikachu?",
            sidebarLayout(
              sidebarPanel("Optimal conditions for finding a particular type",
                           selectInput("select_typeofpoke2","Select Type of Pokemon",dbGetQuery(con,"SELECT DISTINCT `type1` FROM poke_spawns ORDER BY `type1`")),
                           actionButton("action3", label = "(Pokemon) GO"),
-                          wellPanel("Some information about random forests",
+                          wellPanel("Methodology used for prediction:",
                                     textOutput("rf_info")
                           )
              ),
@@ -123,6 +122,8 @@ ui <- shinyUI(navbarPage(
 server <- shinyServer(function(input, output) {
   pokemonGO <- read.csv('./pokemonGO.csv')
   pokemonGO$Name<-as.character(pokemonGO$Name)
+  typeimages <- read.csv('./typepics.csv')
+  typeimages$Type <- as.character(typeimages$Type)
   
   continent_coords_type <- reactive({
     dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and type1 = \'%s\'",as.character(input$select_continent),as.character(input$select_typeofpoke)))
@@ -140,9 +141,22 @@ server <- shinyServer(function(input, output) {
     dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and country = \'%s\' and Name = \'%s\'",as.character(input$select_continent),as.character(input$select_country),as.character(input$select_pkmn)))
   })
   
+  region_coords_type <- reactive({
+    dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and region = \'%s\' and `type1` = \'%s\'",as.character(input$select_continent),as.character(input$select_region),as.character(input$select_typeofpoke)))
+  })
+  
+  region_coords_pkmn <- reactive({
+    dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and region = \'%s\' and Name = \'%s\'",as.character(input$select_continent),as.character(input$select_region),as.character(input$select_pkmn)))
+  })
+  
   output$selectedContinent <- renderUI({
     countries<-dbGetQuery(con, sprintf("SELECT DISTINCT country FROM poke_spawns WHERE continent = \'%s\' ORDER BY country", as.character(input$select_continent)))
     conditionalPanel("input.select_continent", selectInput("select_country","Select Country", countries))
+  })
+  
+  output$region <- renderUI({
+    regions<-dbGetQuery(con, sprintf("SELECT DISTINCT region FROM poke_spawns WHERE country = \'%s\' ORDER BY region", as.character(input$select_country)))
+    conditionalPanel("input.select_country == \"usa\"", selectInput("select_region","Select Region", regions))
   })
   
   output$type_or_pkmn <- renderUI ({
@@ -182,6 +196,20 @@ server <- shinyServer(function(input, output) {
       as.data.frame(country_coords_pkmn())
   })
   
+  get_region_coords <- eventReactive(input$action, {
+    if(user_choice() == "Type")
+      as.data.frame(region_coords_type())
+    else if (user_choice() == "Pokemon")
+      as.data.frame(region_coords_pkmn())
+  })
+  
+  get_region_coords <- eventReactive(input$action, {
+    if(user_choice() == "Type")
+      as.data.frame(region_coords_type())
+    else if (user_choice() == "Pokemon")
+      as.data.frame(region_coords_pkmn())
+  })
+  
   output$map_continent <- renderLeaflet({
     leaflet(get_continent_coords()) %>%
       addTiles() %>%
@@ -194,6 +222,15 @@ server <- shinyServer(function(input, output) {
       addCircles()
   })
   
+  output$region_map <- renderUI({
+    conditionalPanel("input.select_country == \"usa\"",leafletOutput("map_region"))
+  })
+  
+  output$map_region <- renderLeaflet({
+    leaflet(get_region_coords()) %>%
+      addTiles() %>%
+      addCircles()
+  })
   get_daytime_info <- eventReactive(input$action, {
     if(user_choice() == "Type")
       as.data.frame(dbGetQuery(con,sprintf('SELECT appearedTimeOfDay as Period, count(appearedTimeOfDay) as Count from poke_spawns where type1 = \'%s\' group by Period',input$select_typeofpoke)))
@@ -214,6 +251,9 @@ server <- shinyServer(function(input, output) {
     output$knn_result <- renderText({
       as.character(model_knn)
     })
+    output$result_pic <- renderUI({
+      tags$img(src = typeimages[typeimages$Type==as.character(model_knn),2], alt = "photo",height="200", width="200")
+    })
   })
   
   observeEvent(input$action3, {
@@ -222,20 +262,52 @@ server <- shinyServer(function(input, output) {
     imp2 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.2)
     imp3 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.3)
     imp4 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.4)
-    output$plot_imp1 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp1],main = paste("Variable 1:",imp1)))
-    output$plot_imp2 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp2],main = paste("Variable 2:",imp2)))
-    output$plot_imp3 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp3],main = paste("Variable 3:",imp3)))
-    output$plot_imp4 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp4],main = paste("Variable 4:",imp4)))
-    # output$plot_imp1 <- renderPlot(hist(rnorm(100),main = paste("Variable 1:",imp1)))
-    # output$plot_imp2 <- renderPlot(hist(rnorm(100),main = paste("Variable 2:",imp2)))
-    # output$plot_imp3 <- renderPlot(hist(rnorm(100),main = paste("Variable 3:",imp3)))
-    # output$plot_imp4 <- renderPlot(hist(rnorm(100),main = paste("Variable 4:",imp4)))
+    #output$plot_imp1 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp1]))
+    #output$plot_imp2 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp2],main = paste("Variable 2:",imp2)))
+    #output$plot_imp3 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp3],main = paste("Variable 3:",imp3)))
+    #output$plot_imp4 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp4],main = paste("Variable 4:",imp4)))
+    
+    x1 <- subset(data, type1==selectedtype)[,imp1]
+    d1 <- density(x1,na.rm = T)
+    plot(d1, main = paste("Variable 1:",imp1))
+    polygon(d1, col="red", border="blue")
+    output$plot_imp1 <- renderPlot(plot(d1, main = paste("Variable 1:",imp1)))# %>% polygon(d, col="red", border="blue"))
+    
+    x2 <- subset(data, type1==selectedtype)[,imp2]
+    d2 <- density(x,na.rm = T)
+    plot(d2, main = paste("Variable 2:",imp2))
+    polygon(d2, col="red", border="blue")
+    output$plot_imp2 <- renderPlot(plot(d2, main = paste("Variable 2:",imp2)))
+    
+    x3 <- subset(data, type1==selectedtype)[,imp3]
+    d3 <- density(x3,na.rm = T)
+    plot(d3, main = paste("Variable 3:",imp3))
+    polygon(d3, col="red", border="blue")
+    output$plot_imp3 <- renderPlot(plot(d3, main = paste("Variable 3:",imp3)))
+    
+    x4 <- subset(data, type1==selectedtype)[,imp4]
+    d4 <- density(x4,na.rm = T)
+    plot(d4, main = paste("Variable 4:",imp4))
+    polygon(d4, col="red", border="blue")
+    output$plot_imp4 <- renderPlot(plot(d4, main = paste("Variable 4:",imp4)))
+    
   })
   
   output$rf_info <- renderText(
-    "Write text about random forests and cross validation here"
+    "We have used random forests algorithm to determine the top 4 most important features which predict a particular pokemon type.
+    
+    Sampling is done with replacement and we have chosen number of trees = 100 for the computation."
   )
   
+  output$knn_info <- renderText(
+    "To make this prediction we have used the KNN algorithm with k=27. The algorthim 
+    has been trained on our data set of more than 300,000 observations. Given a longitude
+    and latitude it finds the closest observations to this point. Using these nearest neighbours 
+    we find the most common type of pokemon in that area and make our prediction using this information.
+    We chose k=27, after testing error rates usinf 5-fold cross validation. Our data was split into 5 random samples,
+    4 were used as training and 1 for testing. We ran this cross validation for values of k=3 
+    up to k=30 and concluded that our lowest error rate was at k=27."
+  )
 })
 
 # Run the application 
