@@ -6,9 +6,11 @@ library(shinythemes)
 #library(mapproj)
 library(ggplot2)
 library(leaflet)
+library(class)
 #library(googleVis)
 #library(plotrix)
 #library(sqldf)
+load("./R_Environment.RData")
 
 options(shiny.error = function(){})
 
@@ -51,25 +53,41 @@ ui <- shinyUI(navbarPage(
              )
            )        
   ),
-  tabPanel("Who to find",
+  tabPanel("Who will I Battle",
            sidebarLayout(
              sidebarPanel(
-               numericInput("select_longitdue","Input Longitude",value=0),
-               numericInput("select_latitude","Input Latitude",value=0)
+               sliderInput("u_lati",
+                           "Select Latitude",
+                           min = -90,
+                           max = 90,
+                           value = runif(1, min = -85, max = 85),
+                           step = 0.01),
+               sliderInput("u_longi",
+                           "Select Longitude:",
+                           min = -180,
+                           max = 180,
+                           value = runif(1, min = -170, max = 170),
+                           step = 0.01),
+               #numericInput("select_longitdue","Input Longitude",value=0),
+               #numericInput("select_latitude","Input Latitude",value=0),
+               actionButton("action2", label = "(Pokemon) GO")
                ),
-             mainPanel("The most important variables to find this pokemon type is")
+             mainPanel("The most probable type of pokemon that will appear at this location would be:",
+                       textOutput("knn_result"),
+                       #imageOutput(type_image),
+                       "Some information about the prediction methodology")
+                       #textOutput(knn_info))
            )),
-  tabPanel("Where to find them",
+  tabPanel("Where are you Pikachu?",
            sidebarLayout(
-             sidebarPanel("Find the most important factors for the spawns of each pokemon type",
-                          uiOutput("Types2"),
-                          actionButton("action2", label = "(Pokemon) GO")
+             sidebarPanel("Optimal conditions for finding a particular type",
+                          selectInput("select_typeofpoke2","Select Type of Pokemon",dbGetQuery(con,"SELECT DISTINCT `type1` FROM poke_spawns ORDER BY `type1`")),
+                          actionButton("action3", label = "(Pokemon) GO")
              ),
              
-             mainPanel(
-               "Spawns in selected continent"
+             mainPanel("The following plots show the general distribution for the 4 most important variables which determine this pokemon's location "
              )
-           )        
+           )
   )
 ))
 
@@ -117,11 +135,6 @@ server <- shinyServer(function(input, output) {
     tags$img(src = pokemonGO[pokemonGO$Name==input$select_pkmn,7], alt = "photo",height="200", width="200")
   })
   
-  output$Types2 <- renderUI({
-    Types2<-dbGetQuery(con,"SELECT DISTINCT `type1` FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `type1` IS NOT NULL ORDER BY `type1`")
-    selectInput("select_typeofpoke2","Select Type of Pokemon", Types2)
-  })
-  
   user_choice <- reactive({
     as.character(input$selected_choice)
   })
@@ -152,16 +165,30 @@ server <- shinyServer(function(input, output) {
       addCircles()
   })
   
-  selectedinfo <- reactive({
-    dbGetQuery(con,sprintf("SELECT * FROM poke_spawns WHERE class = \'%s\'",as.character(input$select_class)))
+  user_coords <- reactive({
+    c(as.numeric(input$u_lati), as.numeric(input$u_longi))
   })
   
-  selectedtype <- reactive({
-    dbGetQuery(con,sprintf("SELECT * FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `type1` = \'%s\'",as.character(input$select_type)))
+  predicted_type <- eventReactive(input$action2, {
+    #user_coords <- c(as.numeric(input$select_latitude), as.numeric(input$select_longitude))
+    #print(user_coords)
+    model_knn <- knn(train = data[,c(3,4)], test = user_coords(), cl = data[,"type1"], k = 27)
+    as.character(model_knn)
   })
   
-  output$hist_poke <-renderPlot(barplot(table(as.vector(selectedinfo()$weather))))
-  output$hist_other <-renderPlot(barplot(table(as.vector(selectedinfo()$weather))))
+  output$knn_result <- renderText({
+    as.character(predicted_type())
+  })
+  # selectedinfo <- reactive({
+  #   dbGetQuery(con,sprintf("SELECT * FROM poke_spawns WHERE class = \'%s\'",as.character(input$select_class)))
+  # })
+  # 
+  # selectedtype <- reactive({
+  #   dbGetQuery(con,sprintf("SELECT * FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `type1` = \'%s\'",as.character(input$select_type)))
+  # })
+  # 
+  # output$hist_poke <-renderPlot(barplot(table(as.vector(selectedinfo()$weather))))
+  # output$hist_other <-renderPlot(barplot(table(as.vector(selectedinfo()$weather))))
 
 })
 
