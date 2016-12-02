@@ -1,6 +1,6 @@
 #Ignore .RData files
 *.RData
-.Rhistory
+*.Rhistory
 
 # Logs and databases #
 ######################
