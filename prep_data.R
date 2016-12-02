@@ -6,7 +6,6 @@ library(RMySQL)
 # initialise mysql connection
 con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
 #con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
-print("successful connection")
 
 # read raw data
 raw_data<-dbGetQuery(con,"SELECT * FROM 300k")

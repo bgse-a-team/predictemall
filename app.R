@@ -8,6 +8,7 @@ library(ggplot2)
 library(leaflet)
 library(class)
 library(randomForest)
+library(plotly)
 #library(googleVis)
 #library(plotrix)
 #library(sqldf)
@@ -26,8 +27,8 @@ options(shiny.error = function(){})
 #   content: 'Please Select an Option'; }
 # }
 # "
-con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
-#con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
+#con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
+con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
 #con <- dbConnect(MySQL(),user = "root", password = "password", host = "127.0.0.1", dbname = "project")
 
 # Define UI for application
@@ -48,12 +49,21 @@ ui <- shinyUI(navbarPage(
                           actionButton("action", label = "(Pokemon) GO")
              ),
              mainPanel(
-               "Spawns in selected continent",
-               leafletOutput("map_continent"),
-               "Spawns in selected country",
-               leafletOutput("map_country")
+               fluidRow(
+                 column(6,
+                        titlePanel("Spawns in selected continent"),
+                        leafletOutput("map_continent")
+                 ),
+                 column(6,
+                        titlePanel("Spawns by time of day"),
+                        plotlyOutput('daytime_pie'))
+               ),
+               fluidRow(
+                 titlePanel("Spawns in selected country"),
+                 leafletOutput("map_country")
+               )
              )
-           )        
+           )
   ),
   tabPanel("Who will I Battle",
            sidebarLayout(
@@ -71,12 +81,12 @@ ui <- shinyUI(navbarPage(
                            value = runif(1, min = -170, max = 170),
                            step = 0.01),
                actionButton("action2", label = "(Pokemon) GO")
-               ),
+             ),
              mainPanel("The most probable type of pokemon that will appear at this location would be:",
                        textOutput("knn_result"),
                        #imageOutput(type_image),
                        "Some information about the prediction methodology")
-                       #textOutput(knn_info))
+             #textOutput(knn_info))
            )),
   tabPanel("Where are you Pikachu?",
            sidebarLayout(
@@ -84,7 +94,7 @@ ui <- shinyUI(navbarPage(
                           selectInput("select_typeofpoke2","Select Type of Pokemon",dbGetQuery(con,"SELECT DISTINCT `type1` FROM poke_spawns ORDER BY `type1`")),
                           actionButton("action3", label = "(Pokemon) GO"),
                           wellPanel("Some information about random forests",
-                            textOutput("rf_info")
+                                    textOutput("rf_info")
                           )
              ),
              
@@ -136,7 +146,7 @@ server <- shinyServer(function(input, output) {
   output$type_or_pkmn <- renderUI ({
     conditionalPanel("input.select_country", radioButtons("selected_choice","Filter by type or pokemon?", c("Type","Pokemon")))
   })
-
+  
   output$by_type <- renderUI({
     types <- dbGetQuery(con,"SELECT DISTINCT `type1` FROM poke_spawns WHERE `type1` IS NOT NULL ORDER BY `type1`")
     conditionalPanel("input.selected_choice == \"Type\"", selectInput("select_typeofpoke","Select Type of Pokemon", types))
@@ -182,6 +192,20 @@ server <- shinyServer(function(input, output) {
       addCircles()
   })
   
+  get_daytime_info <- eventReactive(input$action, {
+    if(user_choice() == "Type")
+      as.data.frame(dbGetQuery(con,sprintf('SELECT appearedTimeOfDay as Period, count(appearedTimeOfDay) as Count from poke_spawns where type1 = \'%s\' group by Period',input$select_typeofpoke)))
+    else if (user_choice() == "Pokemon")
+      as.data.frame(dbGetQuery(con,sprintf('SELECT appearedTimeOfDay as Period, count(appearedTimeOfDay) as Count from poke_spawns where Name = \'%s\' group by Period',input$select_pkmn)))
+  })
+  
+  output$daytime_pie <- renderPlotly({
+    plot_ly(get_daytime_info(), labels = ~Period, values = ~Count, type = 'pie') %>%
+      layout(title = 'Proportion of showing up period',
+             xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+             yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+  })
+  
   observeEvent(input$action2, {
     user_coords <- c(as.numeric(input$u_lati), as.numeric(input$u_longi))
     model_knn <- knn(train = data[,c(3,4)], test = user_coords, cl = data[,"type1"], k = 27)
@@ -206,7 +230,7 @@ server <- shinyServer(function(input, output) {
   output$rf_info <- renderText(
     "Write text about random forests and cross validation here"
   )
-
+  
 })
 
 # Run the application 
