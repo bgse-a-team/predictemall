@@ -1,26 +1,26 @@
 library(shiny)
-library(maps)
-library(mapdata)
+#library(maps)
+#library(mapdata)
 library(RMySQL)
 library(shinythemes)
-library(mapproj)
+#library(mapproj)
 library(ggplot2)
 library(leaflet)
-library(googleVis)
-library(plotrix)
-library(sqldf)
+#library(googleVis)
+#library(plotrix)
+#library(sqldf)
 
 options(shiny.error = function(){})
 
-css <- "
-.shiny-output-error { visibility: hidden; }
-.shiny-output-error:before {
-  visibility: visible;
-  content: 'Please Select an Option'; }
-}
-"
-con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
-#con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
+# css <- "
+# .shiny-output-error { visibility: hidden; }
+# .shiny-output-error:before {
+#   visibility: visible;
+#   content: 'Please Select an Option'; }
+# }
+# "
+#con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.1", dbname = "project")
+con <- dbConnect(MySQL(),user = "almysql", password = "pass", host = "127.0.0.1", dbname = "project")
 #con <- dbConnect(MySQL(),user = "root", password = "password", host = "127.0.0.1", dbname = "project")
 
 # Define UI for application
@@ -30,12 +30,15 @@ ui <- shinyUI(navbarPage(
   theme = shinytheme("slate"),
   tabPanel("Descriptive",
            sidebarLayout(
-             sidebarPanel("Select fields to see pokemon spawns",
+             sidebarPanel("Select desired fields to see pokemon spawns",
                           selectInput("select_continent","Select Continent",dbGetQuery(con,"SELECT DISTINCT continent FROM poke_spawns WHERE country IS NOT NULL ORDER BY continent")),
                           uiOutput("selectedContinent"),
-                          uiOutput("Types"),
-                          selectInput("select_class","Select Pokemon",dbGetQuery(con,"SELECT DISTINCT a.Name FROM (poke_spawns a inner join pkmn_info b on b.id = a.pokemonId)  WHERE a.Name IS NOT NULL ORDER BY a.Name")),
-                          uiOutput("pics",align="center"),
+                          uiOutput("type_or_pkmn"),
+                          #radioButtons("selected_choice","Filter by type or pokemon?", c("Pokemon","Type")),
+                          uiOutput("by_type"),
+                          uiOutput("by_pokemon"),
+                          #selectInput("select_class","Select Pokemon",dbGetQuery(con,"SELECT DISTINCT a.Name FROM (poke_spawns a inner join pkmn_info b on b.id = a.pokemonId)  WHERE a.Name IS NOT NULL ORDER BY a.Name")),
+                          #uiOutput("pics",align="center"),
                           sliderInput("time", "Period of Time", min = as.Date("2016-08-04"), max = as.Date("2016-10-12"), 
                                       value = c(as.Date("2016-08-01"), Sys.Date())),
                           actionButton("action", label = "(Pokemon) GO")
@@ -71,29 +74,47 @@ ui <- shinyUI(navbarPage(
 ))
 
 server <- shinyServer(function(input, output) {
-  pokemonGO <- read.csv('pokemonGO.csv')
+  pokemonGO <- read.csv('./pokemonGO.csv')
   pokemonGO$Name<-as.character(pokemonGO$Name)
   
-  selectedData <- reactive({
-    dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE country = \'%s\'",as.character(input$select_country)))
+  continent_coords_type <- reactive({
+    dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and type1 = \'%s\'",as.character(input$select_continent),as.character(input$select_typeofpoke)))
   })
   
-  selectedData2 <- reactive({
-    dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and `type1` = \'%s\'",as.character(input$select_continent),as.character(input$select_typeofpoke)))
+  continent_coords_pkmn <- reactive({
+    dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and Name = \'%s\'",as.character(input$select_continent),as.character(input$select_pkmn)))
   })
   
-  selectedData3 <- reactive({
+  country_coords_type <- reactive({
     dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and country = \'%s\' and `type1` = \'%s\'",as.character(input$select_continent),as.character(input$select_country),as.character(input$select_typeofpoke)))
+  })
+  
+  country_coords_pkmn <- reactive({
+    dbGetQuery(con,sprintf("SELECT longitude,latitude FROM poke_spawns WHERE continent = \'%s\' and country = \'%s\' and Name = \'%s\'",as.character(input$select_continent),as.character(input$select_country),as.character(input$select_pkmn)))
   })
   
   output$selectedContinent <- renderUI({
     countries<-dbGetQuery(con, sprintf("SELECT DISTINCT country FROM poke_spawns WHERE continent = \'%s\' ORDER BY country", as.character(input$select_continent)))
     conditionalPanel("input.select_continent", selectInput("select_country","Select Country", countries))
   })
+  
+  output$type_or_pkmn <- renderUI ({
+    conditionalPanel("input.select_country", radioButtons("selected_choice","Filter by type or pokemon?", c("Type","Pokemon")))
+  })
 
-  output$Types <- renderUI({
-    types<-dbGetQuery(con,"SELECT DISTINCT `type1` FROM (poke_spawns inner join pkmn_info on id = pokemonId)  WHERE `type1` IS NOT NULL ORDER BY `type1`")
-    conditionalPanel("input.select_country", selectInput("select_typeofpoke","Select Type of Pokemon", types))
+  output$by_type <- renderUI({
+    types <- dbGetQuery(con,"SELECT DISTINCT `type1` FROM poke_spawns WHERE `type1` IS NOT NULL ORDER BY `type1`")
+    conditionalPanel("input.selected_choice == \"Type\"", selectInput("select_typeofpoke","Select Type of Pokemon", types))
+  })
+  
+  output$by_pokemon <- renderUI ({
+    conditionalPanel("input.selected_choice == \"Pokemon\"",
+                     selectInput("select_pkmn","Select Pokemon",dbGetQuery(con,"SELECT DISTINCT a.Name FROM (poke_spawns a inner join pkmn_info b on b.id = a.pokemonId)  WHERE a.Name IS NOT NULL ORDER BY a.Name")),
+                     uiOutput("pics",align="center"))
+  })
+  
+  output$pics<-renderUI({
+    tags$img(src = pokemonGO[pokemonGO$Name==input$select_pkmn,7], alt = "photo",height="200", width="200")
   })
   
   output$Types2 <- renderUI({
@@ -101,30 +122,34 @@ server <- shinyServer(function(input, output) {
     selectInput("select_typeofpoke2","Select Type of Pokemon", Types2)
   })
   
-  get_continent <- eventReactive(input$action, {
-    as.data.frame(selectedData2())
+  user_choice <- reactive({
+    as.character(input$selected_choice)
   })
   
-  get_country <- eventReactive(input$action, {
-    as.data.frame(selectedData3())
+  get_continent_coords <- eventReactive(input$action, {
+    if(user_choice() == "Type")
+      as.data.frame(continent_coords_type())
+    else if (user_choice() == "Pokemon")
+      as.data.frame(continent_coords_pkmn())
+  })
+  
+  get_country_coords <- eventReactive(input$action, {
+    if(user_choice() == "Type")
+      as.data.frame(country_coords_type())
+    else if (user_choice() == "Pokemon")
+      as.data.frame(country_coords_pkmn())
   })
   
   output$map_continent <- renderLeaflet({
-    leaflet(get_continent()) %>%
+    leaflet(get_continent_coords()) %>%
       addTiles() %>%
       addCircles()
   })
   
   output$map_country <- renderLeaflet({
-    leaflet(get_country()) %>%
+    leaflet(get_country_coords()) %>%
       addTiles() %>%
       addCircles()
-  })
-  
-  output$pics<-renderUI({
-    
-    tags$img(src = pokemonGO[pokemonGO$Name==input$select_class,7], alt = "photo",height="200", width="200")
-    
   })
   
   selectedinfo <- reactive({
