@@ -270,25 +270,25 @@ server <- shinyServer(function(input, output) {
     x1 <- subset(data, type1==selectedtype)[,imp1]
     d1 <- density(x1,na.rm = T)
     plot(d1, main = paste("Variable 1:",imp1))
-    polygon(d1, col="red", border="blue")
+    #polygon(d1, col="red", border="blue")
     output$plot_imp1 <- renderPlot(plot(d1, main = paste("Variable 1:",imp1)))# %>% polygon(d, col="red", border="blue"))
     
     x2 <- subset(data, type1==selectedtype)[,imp2]
     d2 <- density(x2,na.rm = T)
     plot(d2, main = paste("Variable 2:",imp2))
-    polygon(d2, col="red", border="blue")
+    #polygon(d2, col="red", border="blue")
     output$plot_imp2 <- renderPlot(plot(d2, main = paste("Variable 2:",imp2)))
     
     x3 <- subset(data, type1==selectedtype)[,imp3]
     d3 <- density(x3,na.rm = T)
     plot(d3, main = paste("Variable 3:",imp3))
-    polygon(d3, col="red", border="blue")
+    #polygon(d3, col="red", border="blue")
     output$plot_imp3 <- renderPlot(plot(d3, main = paste("Variable 3:",imp3)))
     
     x4 <- subset(data, type1==selectedtype)[,imp4]
     d4 <- density(x4,na.rm = T)
     plot(d4, main = paste("Variable 4:",imp4))
-    polygon(d4, col="red", border="blue")
+    #polygon(d4, col="red", border="blue")
     output$plot_imp4 <- renderPlot(plot(d4, main = paste("Variable 4:",imp4)))
     
   })
