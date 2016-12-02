@@ -7,10 +7,15 @@ library(shinythemes)
 library(ggplot2)
 library(leaflet)
 library(class)
+library(randomForest)
 #library(googleVis)
 #library(plotrix)
 #library(sqldf)
 load("./R_Environment.RData")
+cons <- dbListConnections(MySQL())
+for (con in cons) {
+  dbDisconnect(con)
+}
 
 options(shiny.error = function(){})
 
@@ -187,10 +192,15 @@ server <- shinyServer(function(input, output) {
   
   observeEvent(input$action3, {
     selectedtype <- input$select_typeofpoke2
-    output$plot_imp1 <- renderPlot(hist(rnorm(100)))
-    output$plot_imp2 <- renderPlot(hist(rnorm(100)))
-    output$plot_imp3 <- renderPlot(hist(rnorm(100)))
-    output$plot_imp4 <- renderPlot(hist(rnorm(100)))
+    imp1 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.1)
+    imp2 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.2)
+    imp3 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.3)
+    imp4 <- as.character(subset(imp_predictors, X==selectedtype)$Importance.4)
+    #output$plot_imp1 <- renderPlot(hist(subset(data, type1==selectedtype)[,imp1]))
+    output$plot_imp1 <- renderPlot(hist(rnorm(100),main = paste("Variable 1:",imp1)))
+    output$plot_imp2 <- renderPlot(hist(rnorm(100),main = paste("Variable 2:",imp2)))
+    output$plot_imp3 <- renderPlot(hist(rnorm(100),main = paste("Variable 3:",imp3)))
+    output$plot_imp4 <- renderPlot(hist(rnorm(100),main = paste("Variable 4:",imp4)))
   })
   
   output$rf_info <- renderText(

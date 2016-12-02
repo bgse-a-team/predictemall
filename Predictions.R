@@ -130,3 +130,6 @@ vars <- as.character(vars[,2])
   rownames(error_per_type) <- levels(used_data$type1)
   colnames(error_per_type) <- "error"
   error_per_type
+  
+  # Save random forest results
+  write.csv(importance_predictors,"rf_results.csv")

@@ -67,5 +67,8 @@ dbWriteTable(con,"poke_spawns",data)
 #map(database="world",c("Canada","usa","Mexico"))
 #points(data$longitude,data$latitude,pch=18,cex=0.5,col="red")
 
+# Read random forest results for important variables
+imp_predictors <- read.csv("./rf_results.csv")
+
 # Save R environment
 save.image("./R_Environment.RData")
