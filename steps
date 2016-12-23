@@ -1,50 +1,47 @@
-1. Start EC2 instance
-1.5. Set 4GB swap and turn it on
+1. start an EC2 instance
+2. set a 4GB swap and turn it on if you have chosen a small/micro instance
 
-$sudo dd if=/dev/zero of=/var/swap.img bs=1024k count=4000
-$sudo mkswap /var/swap.img
-$sudo swapon /var/swap.img
+$ sudo dd if=/dev/zero of=/var/swap.img bs=1024k count=4000
+$ sudo mkswap /var/swap.img
+$ sudo swapon /var/swap.img
 
-2. clone git repository
-3. sudo apt install r-base
-4. install shiny package for R $ sudo su - \-c "R -e \"install.packages('shiny', repos='https://cran.rstudio.com/')\""
-5. install shiny server
+3. clone git repository
+
+$ git clone https://github.com/bgse-a-team/predictemall.git
+
+4. sudo apt install r-base
+5. install shiny package for R $ sudo su - \-c "R -e \"install.packages('shiny', repos='https://cran.rstudio.com/')\""
+6. install shiny server
 
 $ sudo apt-get install gdebi-core
 $ wget https://download3.rstudio.org/ubuntu-12.04/x86_64/shiny-server-1.5.1.834-amd64.deb
 $ sudo gdebi shiny-server-1.5.1.834-amd64.deb
 
-6. to control shiny server
+7. the following commands can be used to control shiny server
 
 $ sudo systemctl start shiny-server
 $ sudo systemctl stop shiny-server
 
-7. install required R packages
-8. install mysql-client and mysql-server on instance and allow remote connections
-9. create new user and database on mysql
-10. migrate db to instance - done using dump file in this case
-11. move app directory to /srv/shiny-server/
-12. app is live at <ip-address>:3838
-
-Next time, use a docker
-
-Issues:
-1. Need to avoid re-running render map when selecting just continent/country - run only after pressing button
-2. Points in sea maybe because of column names when selecting latitude and longitude
-3. Using observeEvent() and EventReactive()
-
+8. install the required R packages and dependencies
+9. install mysql-client and mysql-server on instance and allow remote connections
+10. create a new user and database on mysql
+11. migrate db to instance - done using dump file in this case
+12. move app directory to /srv/shiny-server/ - this is the default directory where shiny-server looks for shiny apps
+13. app is live at <ip-address>/predictemall:3838
+14. change the port of shiny-server from 3838 to 80 by editing the configuration file so that app is easily accessible from all locations
+where some ports might be blocked
 
 WORKFLOW
 
-1. wget sql dump file
+1. wget sql dump file from dropbox
 2. create database project; in mysql
 3. load dump file into project db
 
-mysqldump -u user1 -ppassword1 databasename > dump.sql
-mysql -u user2 -ppassword2 databasename < dump.sql
+$ mysqldump -u user1 -ppassword1 databasename > dump.sql
+$ mysql -u user2 -ppassword2 databasename < dump.sql
 
 4. run prep_data.R file to prepare db and save R environment
 
 $ Rscript prep_data.R
 
-5. begin anything in Predictions.R file from loading the environment
+5. begin making models in Predictions.R file - start by loading the environment saved above

@@ -30,7 +30,6 @@ con <- dbConnect(MySQL(),user = "trainer", password = "master", host = "127.0.0.
 # Define UI for application
 ui <- shinyUI(navbarPage(
   title = "Pokemon Go Predictor",
-  #tags$style(type="text/css", css),
   theme = shinytheme("slate"),
   tabPanel("Descriptive",
            sidebarLayout(
